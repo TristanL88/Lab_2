@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Leaflet Exercise</title>
+	<meta charset="utf-8" />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" />	
+	<script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
+  
+	<script src="https://code.jquery.com/jquery-3.3.1.min.js">
+  </script>	
+	
+</head>
+<body>
+
+  <div id="mapid" style="width: 600px; height: 400px;"></div>
+
+  <div id="controls" style="margin: 15px;">
+    <button id="showAllPointsButton">Show Public Art</button>
+
+    <span style="display:inline-block; width: 30px"></span>
+    <input type="text" id="highlightPointsTextEntry" placeholder="Neighbourhood">
+    <button id="highlightPointsButton">Search</button>
+
+  </div>
+  <script>
+    
+   
+    var map = L.map('mapid', { 
+      		center: [49.265637, -123.156113],
+      		zoom: 12
+    		} 
+           );
+    
+		var topoTiles = L.tileLayer(  								'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+		maxZoom: 17,
+		attribution: 'Basemap data: &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Basemap style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+		}
+	).addTo(map);
+    
+    var PlaceMarker = {
+    	radius: 4,
+    	fillColor: "#ff00ff",
+    	color: "#000",
+    	weight: 1,
+    	opacity: 0.8,
+    	fillOpacity: 0.8
+		};
+    
+    function onEachPoint(feature, layer) {
+      if (feature.properties && feature.properties.descriptionofwork) {layer.bindTooltip(feature.properties.descriptionofwork);
+       }
+    }
+   function placePointToLayer(feature, latlng) {
+      return L.circleMarker(
+        latlng,
+        PlaceMarker
+      );
+    }
+
+    function PointsToFilter(feature, layer) {
+      if (placenameToHighlight === "") {
+        return true;
+      } else if (feature.properties && feature.properties.neighbourhood) {
+        return feature.properties.neighbourhood.toLowerCase().includes(placenameToHighlight.toLowerCase()); } 
+      else { return false; }
+    }
+
+    var lastLayerAdded = {};
+    
+    function addPoints() {
+      if (map.hasLayer(lastLayerAdded)) {
+        map.removeLayer(lastLayerAdded);
+      }
+      
+      lastLayerAdded = L.geoJSON(placeGeoJSONdata, {
+        pointToLayer: placePointToLayer,
+        onEachFeature: onEachPoint,
+        filter: PointsToFilter
+      });
+      lastLayerAdded.addTo(map);
+      
+    };
+
+    var placenameToHighlight = "";
+
+    function highlightPoints() {
+      placenameToHighlight = document.getElementById("highlightPointsTextEntry").value;
+      addPoints();
+      placenameToHighlight = ""; 
+    }
+
+    var placeGeoJSONdata;
+    $.getJSON("https://raw.githubusercontent.com/TristanL88/Lab-2/master/public-art%20(1).geojson",
+              
+     function(data) {
+        placeGeoJSONdata = data;
+        // Create event listener for ShowAllTrees Button:
+       
+  document.getElementById("showAllPointsButton").addEventListener("click", addPoints);
+
+        document.getElementById("highlightPointsButton").addEventListener("click", highlightPoints);
+   
+      
+      }
+    );
+  </script>
+
+</body>
+</html>
